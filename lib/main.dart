@@ -34,37 +34,174 @@ class MyAppState extends ChangeNotifier {
     current = WordPair.random();
     notifyListeners();   // (ChangeNotifier) 的一个方法）;watch 该对象会收到通知
   }
+  // 存储在内存中
+  var favorites = <WordPair>[];
+
+  void toggleFavorite() {
+    if (favorites.contains(current)) {
+      favorites.remove(current);
+    } else {
+      favorites.add(current);
+    }
+    notifyListeners();
+  }
 }
 
-class MyHomePage extends StatelessWidget {
+
+class MyHomePage extends StatefulWidget {
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+// 下划线该类设置为私有类
+class _MyHomePageState extends State<MyHomePage> {
+
+  var selectedIndex = 0;
+
   @override
   Widget build(BuildContext context) {
-    // 使用 watch 方法跟踪对应用当前状态的更改
-    var appState = context.watch<MyAppState>();
-    var pair = appState.current;
 
-    return Scaffold(
-      body: Center( // 列居中
-        child: Column(   // 子项放到一列中
+    Widget page;
+    switch (selectedIndex) {
+      case 0:
+        page = GeneratorPage();
+        break;
+      case 1:
+        page = FavoritesPage();  // Placeholder 交叉图形占位符
+        break;
+      default:
+        throw UnimplementedError('no widget for $selectedIndex');
+    }
 
-          mainAxisAlignment: MainAxisAlignment.center,   // 在一列中：居中显示
+    return LayoutBuilder(builder: (context, constraints) {
+      return Scaffold(
+        body: Row(
           children: [
-            // Text('A random AEShello idea:'),
-            BigCard(pair: pair),   // 访问该类的 current 变量
-            SizedBox(height: 10),
-            // 添加一个按钮
-            ElevatedButton(
-              onPressed: () {
-                appState.getNext();
-              },
-              child: Text('Next'),
+            SafeArea(
+              // 确保其子项不会被硬件凹口或状态栏遮挡
+              child: NavigationRail(
+                // 防止导航按钮被遮挡
+                extended: constraints.maxWidth >= 600,
+                destinations: [
+                  NavigationRailDestination(
+                    icon: Icon(Icons.home),
+                    label: Text('Home'),
+                  ),
+                  NavigationRailDestination(
+                    icon: Icon(Icons.favorite),
+                    label: Text('Favorites'),
+                  ),
+                ],
+                selectedIndex: selectedIndex,
+                onDestinationSelected: (value) {
+                  // 选择索引时触发事件
+
+                  setState(() {
+                    selectedIndex = value;
+                  });
+                  // print('selected: $value');
+                },
+              ),
+            ),
+            Expanded(
+              // 子项仅占用所需要的空间 NavigationRail，其他 widget 尽可能占用剩余空间
+              child: Container(
+                // 指定了颜色
+                color: Theme.of(context).colorScheme.primaryContainer,
+                child: page,
+              ),
             ),
           ],
         ),
+      );
+    });
+  }
+}
+
+// 原 MyHomePage 页面
+class GeneratorPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    var appState = context.watch<MyAppState>();
+    var pair = appState.current;
+
+    IconData icon;
+    if (appState.favorites.contains(pair)) {
+      icon = Icons.favorite;
+    } else {
+      icon = Icons.favorite_border;
+    }
+
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          BigCard(pair: pair),
+          SizedBox(height: 10),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ElevatedButton.icon(
+                onPressed: () {
+                  appState.toggleFavorite();
+                },
+                icon: Icon(icon),
+                label: Text('Like'),
+              ),
+              SizedBox(width: 10),
+              ElevatedButton(
+                onPressed: () {
+                  appState.getNext();
+                },
+                child: Text('Next'),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 }
+
+class FavoritesPage extends StatelessWidget{
+
+
+  @override
+  Widget build(BuildContext context) {
+    var appState = context.watch<MyAppState>();
+    var favorites = appState.favorites;
+    if(favorites.isEmpty) {
+      return Center(
+        child: Text('No favorites yet.'),
+      );
+    }
+    return ListView(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(20),
+          child: Text('You have '
+              '${appState.favorites.length} favorites:'),
+        ),
+        for (var pair in favorites)
+          ListTile(
+            leading: Icon(Icons.favorite),
+            title: Text("${pair.first} ${pair.second}"),
+          ),
+      ],
+    );
+    // return Scaffold(
+    //   body: ListView(
+    //     children: [
+    //       for(var item in favorites)
+    //         ListTile(
+    //           title: Text( "${item.first} ${item.second}"),
+    //         ),
+    //     ],
+    //   ),
+    // );
+  }
+}
+
 
 class BigCard extends StatelessWidget {
   const BigCard({
