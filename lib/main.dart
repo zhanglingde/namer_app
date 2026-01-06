@@ -184,24 +184,39 @@ class FavoritesPage extends StatelessWidget{
         child: Text('No favorites yet.'),
       );
     }
-    return ListView(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,   // 向左对齐
       children: [
         Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(30),
           child: Text('You have '
               '${appState.favorites.length} favorites:'),
         ),
-        for (var pair in favorites)
-          ListTile(
-            leading: IconButton(
-                icon: Icon(Icons.delete_outline,semanticLabel: 'Delete',),
-                color: theme.colorScheme.primary,
-                onPressed: () {
-                  appState.removeFavorite(pair);
-                },
+
+        Expanded(
+          child: GridView(   // GridView 可滚动无限高，需要使用 Expanded 包括
+            gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: 400,
+              childAspectRatio: 400 / 80,
             ),
-            title: Text("${pair.first} ${pair.second}"),
+            children: [
+              for (var pair in favorites)
+                ListTile(
+                  leading: IconButton(
+                    icon: Icon(
+                      Icons.delete_outline,
+                      semanticLabel: 'Delete',
+                    ),
+                    color: theme.colorScheme.primary,
+                    onPressed: () {
+                      appState.removeFavorite(pair);
+                    },
+                  ),
+                  title: Text("${pair.first} ${pair.second}"),
+                ),
+            ],
           ),
+        ),
       ],
     );
     // return Scaffold(
