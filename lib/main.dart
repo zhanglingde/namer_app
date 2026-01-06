@@ -45,6 +45,13 @@ class MyAppState extends ChangeNotifier {
     }
     notifyListeners();
   }
+
+  void removeFavorite(WordPair pair){
+    if(favorites.contains(pair)) {
+      favorites.remove(pair);
+      notifyListeners();
+    }
+  }
 }
 
 
@@ -170,6 +177,8 @@ class FavoritesPage extends StatelessWidget{
   Widget build(BuildContext context) {
     var appState = context.watch<MyAppState>();
     var favorites = appState.favorites;
+    var theme = Theme.of(context);
+
     if(favorites.isEmpty) {
       return Center(
         child: Text('No favorites yet.'),
@@ -184,7 +193,13 @@ class FavoritesPage extends StatelessWidget{
         ),
         for (var pair in favorites)
           ListTile(
-            leading: Icon(Icons.favorite),
+            leading: IconButton(
+                icon: Icon(Icons.delete_outline,semanticLabel: 'Delete',),
+                color: theme.colorScheme.primary,
+                onPressed: () {
+                  appState.removeFavorite(pair);
+                },
+            ),
             title: Text("${pair.first} ${pair.second}"),
           ),
       ],
