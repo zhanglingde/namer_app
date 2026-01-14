@@ -2,7 +2,15 @@ import 'package:english_words/english_words.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-void main() {
+import 'dao/word_collect.dart';
+import 'dao/database.dart';
+
+void main() async{
+
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await DBHelper().initDB();
+
   runApp(MyApp());
 }
 
@@ -41,6 +49,7 @@ class MyAppState extends ChangeNotifier {
   }
 
   // 存储在内存中
+  // var favorites = <WordPair>[];
   var favorites = <WordPair>[];
 
   void toggleFavorite([WordPair? pair]) {
