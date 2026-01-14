@@ -76,6 +76,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    var colorScheme = Theme.of(context).colorScheme;
 
     Widget page;
     switch (selectedIndex) {
@@ -89,48 +90,87 @@ class _MyHomePageState extends State<MyHomePage> {
         throw UnimplementedError('no widget for $selectedIndex');
     }
 
-    return LayoutBuilder(builder: (context, constraints) {
-      return Scaffold(
-        body: Row(
-          children: [
-            SafeArea(
-              // 确保其子项不会被硬件凹口或状态栏遮挡
-              child: NavigationRail(
-                // 防止导航按钮被遮挡
-                extended: constraints.maxWidth >= 600,
-                destinations: [
-                  NavigationRailDestination(
-                    icon: Icon(Icons.home),
-                    label: Text('Home'),
-                  ),
-                  NavigationRailDestination(
-                    icon: Icon(Icons.favorite),
-                    label: Text('Favorites'),
-                  ),
-                ],
-                selectedIndex: selectedIndex,
-                onDestinationSelected: (value) {
-                  // 选择索引时触发事件
+    // The container for the current page, with its background color
+    // and subtle switching animation.
+    var mainArea = ColoredBox(
+      color: colorScheme.surfaceVariant,
+      child: AnimatedSwitcher(
+        duration: Duration(milliseconds: 200),
+        child: page,
+      ),
+    );
 
-                  setState(() {
-                    selectedIndex = value;
-                  });
-                  // print('selected: $value');
-                },
+    return Scaffold(
+      body: LayoutBuilder(builder: (context, constraints) {
+        if (constraints.maxWidth < 450) {
+          // 手机版：导航在底部
+          return Column(
+            children: [
+              Expanded(child: mainArea),
+              SafeArea(
+                child: BottomNavigationBar(
+                  items: [
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.home),
+                      label: 'Home',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.favorite),
+                      label: 'Favorites',
+                    ),
+                  ],
+                  currentIndex: selectedIndex,
+                  onTap: (value) {
+                    setState(() {
+                      selectedIndex = value;
+                    });
+                  },
+                ),
+              )
+            ],
+          );
+        } else {
+          return Row(
+            children: [
+              SafeArea(
+                // 确保其子项不会被硬件凹口或状态栏遮挡
+                child: NavigationRail(
+                  // 防止导航按钮被遮挡
+                  extended: constraints.maxWidth >= 600,
+                  destinations: [
+                    NavigationRailDestination(
+                      icon: Icon(Icons.home),
+                      label: Text('Home'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.favorite),
+                      label: Text('Favorites'),
+                    ),
+                  ],
+                  selectedIndex: selectedIndex,
+                  onDestinationSelected: (value) {
+                    // 选择索引时触发事件
+
+                    setState(() {
+                      selectedIndex = value;
+                    });
+                    // print('selected: $value');
+                  },
+                ),
               ),
-            ),
-            Expanded(
-              // 子项仅占用所需要的空间 NavigationRail，其他 widget 尽可能占用剩余空间
-              child: Container(
-                // 指定了颜色
-                color: Theme.of(context).colorScheme.primaryContainer,
-                child: page,
+              Expanded(
+                // 子项仅占用所需要的空间 NavigationRail，其他 widget 尽可能占用剩余空间
+                child: Container(
+                  // 指定了颜色
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  child: page,
+                ),
               ),
-            ),
-          ],
-        ),
-      );
-    });
+            ],
+          );
+        }
+      }),
+    );
   }
 }
 
@@ -178,6 +218,7 @@ class GeneratorPage extends StatelessWidget {
               ),
             ],
           ),
+          Spacer(flex: 2),  // 弹性空白占用组件，因为上面历史列表 Expanded 会尽可能占用多的空间，把 BigCard 挤到最底部，所以使用 Spacer 保证 BigCard 在屏幕中间
         ],
       ),
     );
