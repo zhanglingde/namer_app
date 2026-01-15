@@ -52,23 +52,26 @@ class DBHelper {
 
   // 初始化数据库 + 执行建表语句
   Future<Database> initDB() async {
+
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+
     // 获取数据库存储路径，全平台兼容，无需path_provider
     String dbDir = await getDatabasesPath();
     String dbPath = join(dbDir, dbName);
-
-    // 打开/创建数据库，版本号变更会执行onUpgrade
-    return await openDatabase(
-      dbPath,
-      version: 1,
-      onCreate: (db, version) async {
-        // 数据库首次创建时，执行建表
-        await db.execute(CREATE_LIKE_SQL);
-        print("✅ 收藏单词表创建成功！");
-      },
-      onUpgrade: (db, oldVersion, newVersion) async {
-        // 后续版本更新、表结构修改在这里写（比如新增字段）
-        // 例：await db.execute("ALTER TABLE $tableWord ADD COLUMN remark TEXT DEFAULT ''");
-      },
+    return await databaseFactory.openDatabase(dbPath,
+      options: OpenDatabaseOptions(
+        version: 1,
+        onCreate: (db, version) async {
+          // 数据库首次创建时，执行建表
+          await db.execute(CREATE_LIKE_SQL);
+          print("✅ 收藏单词表创建成功！");
+        },
+        onUpgrade: (db, oldVersion, newVersion) async {
+          // 后续版本更新、表结构修改在这里写（比如新增字段）
+          // 例：await db.execute("ALTER TABLE $tableWord ADD COLUMN remark TEXT DEFAULT ''");
+        },
+      )
     );
   }
 

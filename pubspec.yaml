@@ -38,8 +38,9 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
 
-  # 核心：全平台SQLite数据库 (iOS/Android/Windows/Mac/Linux)  sqflite 只支持 ios/Android，不支持桌面版所以使用 sqflite_common_ffi
-  sqflite_common_ffi: ^2.4.0
+  # 核心：全平台SQLite数据库 (iOS/Android/Windows/Mac/Linux)  sqflite 只支持 ios/Android，不支持桌面版所以使用 sqflite_common_ffi(版本号前加 ^ 是允许依赖包自动升级到「主版本号不变」的最新稳定版)
+  sqflite_common_ffi: 2.3.0
+  sqflite: ^2.3.2
   # 工具：路径拼接（必加，拼接数据库文件路径）
   path: ^1.9.1
 

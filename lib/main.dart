@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import 'dao/word_collect.dart';
 import 'dao/database.dart';
+import 'models/Word.dart';
 
 void main() async{
 
@@ -52,20 +53,70 @@ class MyAppState extends ChangeNotifier {
   // var favorites = <WordPair>[];
   var favorites = <WordPair>[];
 
-  void toggleFavorite([WordPair? pair]) {
-    pair = pair ?? current;  // pair 不为 null 取 pair,pair 为 null,取 current
-    if (favorites.contains(pair)) {
-      favorites.remove(pair);
-    } else {
-      favorites.add(pair);
+  // 从数据库加载收藏的单词
+  Future<void> loadFavorites() async {
+    try {
+      final words = await selectCollects();
+      favorites = words.map((word) => word.convertWordPair()).toList();
+      notifyListeners();
+    } catch (e) {
+      // 处理加载失败的情况
+      print('Failed to load favorites: $e');
+      favorites = [];
     }
-    notifyListeners();
   }
 
-  void removeFavorite(WordPair pair){
-    if(favorites.contains(pair)) {
-      favorites.remove(pair);
+  Future<void> toggleFavorite([WordPair? pair]) async {
+    pair = pair ?? current;  // pair 不为 null 取 pair,pair 为 null,取 current
+    // if (favorites.contains(pair)) {
+    //   favorites.remove(pair);
+    // } else {
+    //   favorites.add(pair);
+    // }
+    // notifyListeners();
+    try {
+      if (favorites.contains(pair)) {
+        // 取消收藏
+        favorites.remove(pair);
+        await deleteWord(pair.first);
+      } else {
+        // 添加收藏
+        favorites.add(pair);
+        final word = Word(
+          id: -1,
+          first: pair.first,
+          second: pair.second,
+          addTime: DateTime.now(),
+        );
+        await insertCollect(word);
+      }
       notifyListeners();
+    } catch (e) {
+      // 处理操作失败的情况
+      print('Failed to toggle favorite: $e');
+      // 如果操作失败，恢复状态
+      if (favorites.contains(pair)) {
+        favorites.remove(pair);
+      } else {
+        favorites.add(pair);
+      }
+    }
+  }
+
+  Future<void> removeFavorite(WordPair pair) async {
+    try {
+      if(favorites.contains(pair)) {
+        favorites.remove(pair);
+        await deleteWord(pair.first);
+        notifyListeners();
+      }
+    } catch (e) {
+      // 处理操作失败的情况
+      print('Failed to remove favorite: $e');
+      // 如果操作失败，恢复状态
+      if (!favorites.contains(pair)) {
+        favorites.add(pair);
+      }
     }
   }
 
@@ -82,6 +133,14 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
 
   var selectedIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // 应用启动时加载收藏数据
+    final appState = Provider.of<MyAppState>(context, listen: false);
+    appState.loadFavorites();
+  }
 
   @override
   Widget build(BuildContext context) {

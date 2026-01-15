@@ -1,4 +1,4 @@
-import '../models/word.dart';
+import '../models/Word.dart';
 import 'database.dart';
 
 
