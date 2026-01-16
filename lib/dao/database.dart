@@ -31,6 +31,14 @@ CREATE TABLE tb_word_collect (
   add_time INTEGER DEFAULT (strftime('%s', 'now'))
 )
 ''';
+const CREATE_HISTORY_SQL = '''
+CREATE TABLE tb_history (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  first TEXT NOT NULL UNIQUE,
+  second TEXT NOT NULL UNIQUE,
+  create_time INTEGER DEFAULT (strftime('%s', 'now'))
+)
+''';
 
 class DBHelper {
 
@@ -65,11 +73,13 @@ class DBHelper {
         onCreate: (db, version) async {
           // 数据库首次创建时，执行建表
           await db.execute(CREATE_LIKE_SQL);
+          await db.execute(CREATE_HISTORY_SQL);
           print("✅ 收藏单词表创建成功！");
         },
         onUpgrade: (db, oldVersion, newVersion) async {
           // 后续版本更新、表结构修改在这里写（比如新增字段）
-          // 例：await db.execute("ALTER TABLE $tableWord ADD COLUMN remark TEXT DEFAULT ''");
+          // await db.execute("ALTER TABLE $tableWord ADD COLUMN remark TEXT DEFAULT ''");
+          // print("✅ 数据库升级成功，新增历史表！");
         },
       )
     );

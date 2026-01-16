@@ -1,5 +1,7 @@
 import 'package:english_words/english_words.dart';
 import 'package:flutter/material.dart';
+import 'package:namer_app/dao/history.dart';
+import 'package:namer_app/models/History.dart';
 import 'package:provider/provider.dart';
 
 import 'dao/word_collect.dart';
@@ -39,11 +41,22 @@ class MyApp extends StatelessWidget {
 class MyAppState extends ChangeNotifier {
   var current = WordPair.random();
   var history = <WordPair>[];
-  GlobalKey? historyListKey;
+  GlobalKey<AnimatedListState>? historyListKey;   // 可为空的全局键变量
+  bool isHistoryLoading = true;  // 历史记录加载状态
 
-  void getNext() {
+  Future<void> getNext() async {
     history.insert(0, current);
+    final his = History(
+      id: -1,
+      first: current.first,
+      second: current.second,
+      createTime: DateTime.now(),
+    );
+    await addHistory(his);
+    // AnimatedList 带动画的列表；通过提前绑定的全局key，获取AnimatedList的状态管理对象
+    // historyListKey绑定在页面的AnimatedList组件上，拿到状态后才能调用列表的动画增删方法
     var animatedList = historyListKey?.currentState as AnimatedListState?;
+    // 调用AnimatedList的动画插入方法：在列表【第0个位置(列表顶部)】插入一条数据，并且自带系统默认的插入动画
     animatedList?.insertItem(0);
     current = WordPair.random();
     notifyListeners(); // (ChangeNotifier) 的一个方法）;watch 该对象会收到通知
@@ -66,14 +79,23 @@ class MyAppState extends ChangeNotifier {
     }
   }
 
+  // 加载历史记录
+  Future<void> loadHistorys() async {
+    try {
+      final historys = await selectHistory();
+      history = historys.map((his) => his.convertWordPair()).toList();
+    } catch (e) {
+      // 处理加载失败的情况
+      print('Failed to load historys: $e');
+      history = [];
+    } finally {
+      isHistoryLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> toggleFavorite([WordPair? pair]) async {
     pair = pair ?? current;  // pair 不为 null 取 pair,pair 为 null,取 current
-    // if (favorites.contains(pair)) {
-    //   favorites.remove(pair);
-    // } else {
-    //   favorites.add(pair);
-    // }
-    // notifyListeners();
     try {
       if (favorites.contains(pair)) {
         // 取消收藏
@@ -140,6 +162,7 @@ class _MyHomePageState extends State<MyHomePage> {
     // 应用启动时加载收藏数据
     final appState = Provider.of<MyAppState>(context, listen: false);
     appState.loadFavorites();
+    appState.loadHistorys();
   }
 
   @override
@@ -399,7 +422,7 @@ class HistoryListView extends StatefulWidget {
 class _HistoryListViewState extends State<HistoryListView> {
   /// Needed so that [MyAppState] can tell [AnimatedList] below to animate
   /// new items.
-  final _key = GlobalKey();
+  final _key = GlobalKey<AnimatedListState>();
 
   /// Used to "fade out" the history items at the top, to suggest continuation.
   static const Gradient _maskingGradient = LinearGradient(
@@ -412,10 +435,27 @@ class _HistoryListViewState extends State<HistoryListView> {
   );
 
   @override
-  Widget build(BuildContext context) {
+  void didChangeDependencies() {
+    super.didChangeDependencies();
     final appState = context.watch<MyAppState>();
     appState.historyListKey = _key;
+    
+    // 当历史记录加载完成后，如果 AnimatedList 为空，添加所有历史记录
+    if (!appState.isHistoryLoading && _key.currentState != null) {
+      final animatedList = _key.currentState!;
+      if (animatedList.widget.initialItemCount == 0 && appState.history.isNotEmpty) {
+        // 从后往前添加，保持正确的顺序
+        for (int i = appState.history.length - 1; i >= 0; i--) {
+          animatedList.insertItem(0);
+        }
+      }
+    }
+  }
 
+  @override
+  Widget build(BuildContext context) {
+    final appState = context.watch<MyAppState>();
+    
     return ShaderMask(
       shaderCallback: (bounds) => _maskingGradient.createShader(bounds),
       // This blend mode takes the opacity of the shader (i.e. our gradient)
@@ -425,7 +465,7 @@ class _HistoryListViewState extends State<HistoryListView> {
         key: _key,
         reverse: true,
         padding: EdgeInsets.only(top: 100),
-        initialItemCount: appState.history.length,
+        initialItemCount: appState.isHistoryLoading ? 0 : appState.history.length,
         itemBuilder: (context, index, animation) {
           final pair = appState.history[index];
           return SizeTransition(
