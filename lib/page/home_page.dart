@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:namer_app/page/settings_page.dart';
 import 'package:provider/provider.dart';
 
 import '../config/my_app_state.dart';
@@ -44,11 +45,8 @@ class _MyHomePageState extends State<MyHomePage> {
         page = Placeholder();   // 下载
         break;  //
       case 4:
-        page = Placeholder();   // 设置
+        page = SettingsPage();   // 设置
         break;  //
-      case 5:
-        page = Placeholder();  // Theme
-        break;
       default:
         throw UnimplementedError('no widget for $selectedIndex');
     }
@@ -73,14 +71,11 @@ class _MyHomePageState extends State<MyHomePage> {
               SafeArea(
                 child: BottomNavigationBar(
                   items: [
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.home),
-                      label: 'Home',
-                    ),
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.favorite),
-                      label: 'Favorites',
-                    ),
+                    BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+                    BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Favorites'),
+                    BottomNavigationBarItem(icon: Icon(Icons.search), label: '搜索'),
+                    BottomNavigationBarItem(icon: Icon(Icons.download), label: '下载'),
+                    BottomNavigationBarItem(icon: Icon(Icons.settings), label: '设置'),
                   ],
                   currentIndex: selectedIndex,
                   onTap: (value) {
@@ -109,6 +104,9 @@ class _MyHomePageState extends State<MyHomePage> {
                       icon: Icon(Icons.favorite),
                       label: Text('Favorites'),
                     ),
+                    NavigationRailDestination(icon: Icon(Icons.search), label: Text('搜索'),),
+                    NavigationRailDestination(icon: Icon(Icons.download), label: Text('下载'),),
+                    NavigationRailDestination(icon: Icon(Icons.settings), label: Text('设置'),),
                   ],
                   selectedIndex: selectedIndex,
                   onDestinationSelected: (value) {
