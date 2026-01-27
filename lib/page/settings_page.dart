@@ -23,6 +23,8 @@ class _SettingsPageState extends State<SettingsPage>{
 
   late String _storagePath;
 
+  bool _isDarkMode = Prefs().isDarkMode();
+
   @override
   void initState() {
     super.initState();
@@ -81,7 +83,20 @@ class _SettingsPageState extends State<SettingsPage>{
           ),
           ListTile(
             title: const Text("预览存储目录"),
-            onTap: _openCurrentDirectory,
+            onTap: _openCurrentDirectory,    // onTap 处理回调事件
+          ),
+          ListTile(
+            title: const Text("切换主题"),
+            subtitle: Text(_isDarkMode ? "深色模式" : "浅色模式"),
+            trailing: Switch(
+              value: _isDarkMode,
+              onChanged: (value) {
+                setState(() {
+                  _isDarkMode = value;
+                  prefs.saveThemeModeToPrefs(_isDarkMode ? "dark" : "light");
+                });
+              },
+            ),
           ),
         ],
       ),

@@ -68,6 +68,11 @@ class Prefs extends ChangeNotifier {
     }
   }
 
+  bool isDarkMode(){
+    String themeMode = prefs.getString('themeMode') ?? 'system';
+    return 'dart' == themeMode;
+  }
+
   Future<void> saveThemeModeToPrefs(String themeMode) async {
     await prefs.setString('themeMode', themeMode);
     notifyListeners();

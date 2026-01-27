@@ -45,6 +45,10 @@ class MyApp extends StatelessWidget {
                 colorScheme: ColorScheme.fromSeed(
                     seedColor: prefsNotifier.themeColor), //  应用主题
               ),
+              darkTheme: ThemeData(
+                primarySwatch: Colors.blue,
+                brightness: Brightness.dark,
+              ),
               home: MyHomePage(),
             );
           }
