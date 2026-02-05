@@ -1,5 +1,9 @@
 allprojects {
     repositories {
+        // 关键：使用双引号 " "，并且 url 后面需要括号或者使用 uri()
+        maven { url = uri("https://maven.aliyun.com/repository/google") }
+        maven { url = uri("https://maven.aliyun.com/repository/public") }
+        maven { url = uri("https://maven.aliyun.com/repository/jcenter") }
         google()
         mavenCentral()
     }

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -60,9 +59,11 @@ class DBHelper {
 
   // 初始化数据库 + 执行建表语句
   Future<Database> initDB() async {
-
-    sqfliteFfiInit();
-    databaseFactory = databaseFactoryFfi;
+    if (Platform.isWindows || Platform.isLinux) {
+      // 桌面端：初始化 FFI
+      sqfliteFfiInit();
+      databaseFactory = databaseFactoryFfi;
+    }
 
     // 获取数据库存储路径，全平台兼容，无需path_provider
     String dbDir = await getDatabasesPath();

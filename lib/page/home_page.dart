@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:namer_app/page/search_page.dart';
 import 'package:namer_app/page/settings_page.dart';
 import 'package:provider/provider.dart';
 
@@ -39,7 +40,7 @@ class _MyHomePageState extends State<MyHomePage> {
         page = FavoritesPage();  // Placeholder 交叉图形占位符
         break;
       case 2:
-        page = Placeholder();   // 搜索
+        page = SearchPage();   // 搜索
         break;
       case 3:
         page = Placeholder();   // 下载
