@@ -1,18 +1,19 @@
-
 import 'package:english_words/english_words.dart';
 import 'package:flutter/cupertino.dart';
 
-import '../dao/history.dart';
-import '../dao/word_collect.dart';
-import '../models/History.dart';
-import '../models/Word.dart';
+import '../dao/history_dao.dart';
+import '../dao/word_collect_dao.dart';
+import '../models/history.dart';
+import '../models/word.dart';
 
 // 定义应用运行所需的数据
 class MyAppState extends ChangeNotifier {
   var current = WordPair.random();
   var history = <WordPair>[];
-  GlobalKey<AnimatedListState>? historyListKey;   // 可为空的全局键变量
-  bool isHistoryLoading = true;  // 历史记录加载状态
+  GlobalKey<AnimatedListState>? historyListKey; // 可为空的全局键变量
+  bool isHistoryLoading = true; // 历史记录加载状态
+  final HistoryDao _historyDao = HistoryDao();
+  final WordCollectDao _wordCollectDao = WordCollectDao();
 
   Future<void> getNext() async {
     history.insert(0, current);
@@ -22,7 +23,7 @@ class MyAppState extends ChangeNotifier {
       second: current.second,
       createTime: DateTime.now(),
     );
-    await addHistory(his);
+    await _historyDao.addHistory(his);
     // AnimatedList 带动画的列表；通过提前绑定的全局key，获取AnimatedList的状态管理对象
     // historyListKey绑定在页面的AnimatedList组件上，拿到状态后才能调用列表的动画增删方法
     var animatedList = historyListKey?.currentState as AnimatedListState?;
@@ -39,7 +40,7 @@ class MyAppState extends ChangeNotifier {
   // 从数据库加载收藏的单词
   Future<void> loadFavorites() async {
     try {
-      final words = await selectCollects();
+      final words = await _wordCollectDao.selectCollects();
       favorites = words.map((word) => word.convertWordPair()).toList();
       notifyListeners();
     } catch (e) {
@@ -52,7 +53,7 @@ class MyAppState extends ChangeNotifier {
   // 加载历史记录
   Future<void> loadHistorys() async {
     try {
-      final historys = await selectHistory();
+      final historys = await _historyDao.selectHistory();
       history = historys.map((his) => his.convertWordPair()).toList();
     } catch (e) {
       // 处理加载失败的情况
@@ -65,12 +66,12 @@ class MyAppState extends ChangeNotifier {
   }
 
   Future<void> toggleFavorite([WordPair? pair]) async {
-    pair = pair ?? current;  // pair 不为 null 取 pair,pair 为 null,取 current
+    pair = pair ?? current; // pair 不为 null 取 pair,pair 为 null,取 current
     try {
       if (favorites.contains(pair)) {
         // 取消收藏
         favorites.remove(pair);
-        await deleteWord(pair.first);
+        await _wordCollectDao.deleteWord(pair.first);
       } else {
         // 添加收藏
         favorites.add(pair);
@@ -80,7 +81,7 @@ class MyAppState extends ChangeNotifier {
           second: pair.second,
           addTime: DateTime.now(),
         );
-        await insertCollect(word);
+        await _wordCollectDao.insertCollect(word);
       }
       notifyListeners();
     } catch (e) {
@@ -97,9 +98,9 @@ class MyAppState extends ChangeNotifier {
 
   Future<void> removeFavorite(WordPair pair) async {
     try {
-      if(favorites.contains(pair)) {
+      if (favorites.contains(pair)) {
         favorites.remove(pair);
-        await deleteWord(pair.first);
+        await _wordCollectDao.deleteWord(pair.first);
         notifyListeners();
       }
     } catch (e) {
@@ -111,6 +112,4 @@ class MyAppState extends ChangeNotifier {
       }
     }
   }
-
-
 }

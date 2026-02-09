@@ -38,6 +38,18 @@ CREATE TABLE tb_history (
   create_time INTEGER DEFAULT (strftime('%s', 'now'))
 )
 ''';
+const CREATE_NOTE_SQL = '''
+CREATE TABLE notes (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  content TEXT NOT NULL,
+  createdAt TEXT NOT NULL,
+  updatedAt TEXT NOT NULL,
+  tags TEXT,
+  isPinned INTEGER NOT NULL DEFAULT 0,
+  isArchived INTEGER NOT NULL DEFAULT 0
+)
+''';
 
 class DBHelper {
 
@@ -60,7 +72,7 @@ class DBHelper {
   // 初始化数据库 + 执行建表语句
   Future<Database> initDB() async {
     if (Platform.isWindows || Platform.isLinux) {
-      // 桌面端：初始化 FFI
+      // 桌面端：初始化 FFI; 安卓和 ios 原生支持 sqlite,不需要 ffi
       sqfliteFfiInit();
       databaseFactory = databaseFactoryFfi;
     }
@@ -79,7 +91,7 @@ class DBHelper {
         },
         onUpgrade: (db, oldVersion, newVersion) async {
           // 后续版本更新、表结构修改在这里写（比如新增字段）
-          // await db.execute("ALTER TABLE $tableWord ADD COLUMN remark TEXT DEFAULT ''");
+          await db.execute(CREATE_NOTE_SQL);
           // print("✅ 数据库升级成功，新增历史表！");
         },
       )

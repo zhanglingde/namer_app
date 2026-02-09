@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:namer_app/page/note_page.dart';
 import 'package:namer_app/page/search_page.dart';
 import 'package:namer_app/page/settings_page.dart';
 import 'package:provider/provider.dart';
@@ -47,6 +48,9 @@ class _MyHomePageState extends State<MyHomePage> {
         break;  //
       case 4:
         page = SettingsPage();   // 设置
+        break;  //
+      case 5:
+        page = NotePage();   // 笔记
         break;  //
       default:
         throw UnimplementedError('no widget for $selectedIndex');
@@ -98,17 +102,12 @@ class _MyHomePageState extends State<MyHomePage> {
                   // 防止导航按钮被遮挡
                   extended: constraints.maxWidth >= 600,
                   destinations: [
-                    NavigationRailDestination(
-                      icon: Icon(Icons.home),
-                      label: Text('Home'),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.favorite),
-                      label: Text('Favorites'),
-                    ),
+                    NavigationRailDestination(icon: Icon(Icons.home), label: Text('Home'),),
+                    NavigationRailDestination(icon: Icon(Icons.favorite), label: Text('Favorites'),),
                     NavigationRailDestination(icon: Icon(Icons.search), label: Text('搜索'),),
                     NavigationRailDestination(icon: Icon(Icons.download), label: Text('下载'),),
                     NavigationRailDestination(icon: Icon(Icons.settings), label: Text('设置'),),
+                    NavigationRailDestination(icon: Icon(Icons.book), label: Text('笔记'),),
                   ],
                   selectedIndex: selectedIndex,
                   onDestinationSelected: (value) {
