@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import '../models/note.dart';
 import '../providers/note_provider.dart';
 
@@ -17,6 +18,7 @@ class _NoteDetailPageState extends State<NoteDetailPage> {
 
   Note? _currentNote;
   bool _isModified = false;
+  bool _isPreviewMode = false;
 
   @override
   void dispose() {
@@ -145,18 +147,10 @@ class _NoteDetailPageState extends State<NoteDetailPage> {
                   _buildTags(note, provider),
                   const SizedBox(height: 24),
 
-                  // 内容输入
-                  TextField(
-                    controller: _contentController,
-                    style: const TextStyle(fontSize: 16, height: 1.6),
-                    decoration: const InputDecoration(
-                      hintText: '开始写点什么...',
-                      border: InputBorder.none,
-                    ),
-                    maxLines: null,
-                    keyboardType: TextInputType.multiline,
-                    onChanged: (_) => _onTextChanged(),
-                  ),
+                  // 内容区域 - 根据模式显示编辑器或预览
+                  _isPreviewMode
+                      ? _buildMarkdownPreview()
+                      : _buildMarkdownEditor(),
                 ],
               ),
             ),
@@ -180,6 +174,29 @@ class _NoteDetailPageState extends State<NoteDetailPage> {
               backgroundColor: _isModified ? Colors.blue : Colors.grey[300],
               foregroundColor: _isModified ? Colors.white : Colors.grey[600],
             ),
+          ),
+          const SizedBox(width: 8),
+
+          // 编辑/预览切换按钮
+          SegmentedButton<bool>(
+            segments: const [
+              ButtonSegment(
+                value: false,
+                label: Text('编辑'),
+                icon: Icon(Icons.edit, size: 16),
+              ),
+              ButtonSegment(
+                value: true,
+                label: Text('预览'),
+                icon: Icon(Icons.visibility, size: 16),
+              ),
+            ],
+            selected: {_isPreviewMode},
+            onSelectionChanged: (Set<bool> newSelection) {
+              setState(() {
+                _isPreviewMode = newSelection.first;
+              });
+            },
           ),
           const Spacer(),
 
@@ -346,5 +363,123 @@ class _NoteDetailPageState extends State<NoteDetailPage> {
   String _formatDateTime(DateTime dateTime) {
     return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} '
         '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+
+  // Markdown 工具栏
+  Widget _buildMarkdownToolbar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Wrap(
+        spacing: 4,
+        runSpacing: 4,
+        children: [
+          _buildToolbarButton(Icons.format_bold, '加粗', () => _insertMarkdown('**', '**')),
+          _buildToolbarButton(Icons.format_italic, '斜体', () => _insertMarkdown('*', '*')),
+          _buildToolbarButton(Icons.title, '标题', () => _insertMarkdown('## ', '')),
+          _buildToolbarButton(Icons.format_list_bulleted, '列表', () => _insertMarkdown('- ', '')),
+          _buildToolbarButton(Icons.format_list_numbered, '有序列表', () => _insertMarkdown('1. ', '')),
+          _buildToolbarButton(Icons.link, '链接', () => _insertMarkdown('[', '](url)')),
+          _buildToolbarButton(Icons.code, '代码', () => _insertMarkdown('`', '`')),
+          _buildToolbarButton(Icons.code_off, '代码块', () => _insertMarkdown('```\n', '\n```')),
+          _buildToolbarButton(Icons.format_quote, '引用', () => _insertMarkdown('> ', '')),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToolbarButton(IconData icon, String tooltip, VoidCallback onPressed) {
+    return IconButton(
+      icon: Icon(icon, size: 20),
+      tooltip: tooltip,
+      onPressed: onPressed,
+      padding: const EdgeInsets.all(8),
+      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+    );
+  }
+
+  void _insertMarkdown(String prefix, String suffix) {
+    final text = _contentController.text;
+    final selection = _contentController.selection;
+    final start = selection.start;
+    final end = selection.end;
+
+    String newText;
+    int newCursorPos;
+
+    if (start == end) {
+      // 没有选中文本，直接插入
+      newText = text.substring(0, start) + prefix + suffix + text.substring(end);
+      newCursorPos = start + prefix.length;
+    } else {
+      // 有选中文本，包裹选中的文本
+      final selectedText = text.substring(start, end);
+      newText = text.substring(0, start) + prefix + selectedText + suffix + text.substring(end);
+      newCursorPos = start + prefix.length + selectedText.length + suffix.length;
+    }
+
+    _contentController.value = TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(offset: newCursorPos),
+    );
+    _onTextChanged();
+  }
+
+  // Markdown 编辑器
+  Widget _buildMarkdownEditor() {
+    return Column(
+      children: [
+        // Markdown 工具栏
+        _buildMarkdownToolbar(),
+        const SizedBox(height: 16),
+        // 编辑器
+        TextField(
+          controller: _contentController,
+          style: const TextStyle(fontSize: 16, height: 1.6),
+          decoration: const InputDecoration(
+            hintText: '开始写点什么... 支持 Markdown 语法',
+            border: InputBorder.none,
+          ),
+          maxLines: null,
+          keyboardType: TextInputType.multiline,
+          onChanged: (_) => _onTextChanged(),
+        ),
+      ],
+    );
+  }
+
+  // Markdown 预览
+  Widget _buildMarkdownPreview() {
+    final content = _contentController.text;
+    if (content.isEmpty) {
+      return Center(
+        child: Text(
+          '暂无内容',
+          style: TextStyle(fontSize: 16, color: Colors.grey[400]),
+        ),
+      );
+    }
+
+    return MarkdownBody(
+      data: content,
+      selectable: true,
+      styleSheet: MarkdownStyleSheet(
+        p: const TextStyle(fontSize: 16, height: 1.6),
+        h1: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+        h2: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        h3: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        code: TextStyle(
+          backgroundColor: Colors.grey[100],
+          fontFamily: 'monospace',
+        ),
+        codeblockDecoration: BoxDecoration(
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(4),
+        ),
+      ),
+    );
   }
 }
