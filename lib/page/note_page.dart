@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:namer_app/providers/note_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../dao/note_dao.dart';
 import '../models/note.dart';
 
 class NotePage extends StatefulWidget {
@@ -14,22 +13,7 @@ class _NotePageState extends State<NotePage> {
 
   @override
   Widget build(BuildContext context) {
-    var theme = Theme.of(context);
-
-    // if (_isLoading) {
-    //   return Center(
-    //     child: CircularProgressIndicator(),
-    //   );
-    // }
-    //
-    // if (_notes.isEmpty) {
-    //   return Center(
-    //     child: Text('暂无笔记'),
-    //   );
-    // }
-
     return Container(
-      width: 350,
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border(
@@ -266,10 +250,5 @@ class _NotePageState extends State<NotePage> {
         ),
       );
     });
-  }
-
-  String _formatDateTime(DateTime dateTime) {
-    return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} '
-        '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 }

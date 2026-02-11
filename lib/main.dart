@@ -31,7 +31,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => Prefs(),),
         ChangeNotifierProvider(create: (context) => MyAppState(),),
         // 创建后立即触发加载数据库
-        ChangeNotifierProvider(create: (context) => NotesProvider()..selectedNote,),
+        ChangeNotifierProvider(create: (context) => NotesProvider()..loadNotes(),),
       ],
       child: Consumer<Prefs>(  // Consumer 从上面的 MultiProvider 注册的状态列表中，获取 Prefs 并监听
           builder: (context, prefsNotifier, child) {

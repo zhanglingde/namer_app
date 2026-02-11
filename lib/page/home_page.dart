@@ -1,6 +1,6 @@
 
 import 'package:flutter/material.dart';
-import 'package:namer_app/page/note_page.dart';
+import 'package:namer_app/page/notes_layout_page.dart';
 import 'package:namer_app/page/search_page.dart';
 import 'package:namer_app/page/settings_page.dart';
 import 'package:provider/provider.dart';
@@ -50,7 +50,7 @@ class _MyHomePageState extends State<MyHomePage> {
         page = SettingsPage();   // 设置
         break;  //
       case 5:
-        page = NotePage();   // 笔记
+        page = NotesLayoutPage();   // 笔记
         break;  //
       default:
         throw UnimplementedError('no widget for $selectedIndex');
