@@ -11,6 +11,8 @@ class NotePage extends StatefulWidget {
 
 class _NotePageState extends State<NotePage> {
 
+  final TextEditingController _searchController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -22,18 +24,58 @@ class _NotePageState extends State<NotePage> {
       ),
       child: Column(
         children: [
-          IconButton(
-            icon: const Icon(Icons.add, size: 24),
-            onPressed: () {
-              context.read<NotesProvider>().createNote();
-            },
-            tooltip: '新建笔记',
+          Row(  // Row 在水平上无限延伸，需要使用 Expanded 包裹占据剩余空间
+            children: [
+              Expanded(
+                child: _buildSearchBar(),
+              ),
+              IconButton(
+                icon: const Icon(Icons.add, size: 24),
+                onPressed: () {
+                  context.read<NotesProvider>().createNote();
+                },
+                tooltip: '新建笔记',
+              ),
+            ],
           ),
           const Divider(height: 1),
           Expanded(
             child: _buildNotesList(),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      child: TextField(
+        controller: _searchController,
+        decoration: InputDecoration(
+          hintText: '搜索内容、标签、文件',
+          hintStyle: TextStyle(fontSize: 14, color: Colors.grey[500]),
+          prefixIcon: const Icon(Icons.search, size: 20),
+          suffixIcon: _searchController.text.isNotEmpty
+              ? IconButton(
+            icon: const Icon(Icons.clear, size: 20),
+            onPressed: () {
+              _searchController.clear();
+              context.read<NotesProvider>().setSearchQuery('');
+            },
+          )
+              : null,
+          filled: true,
+          fillColor: Colors.grey[100],
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide.none,
+          ),
+          contentPadding: const EdgeInsets.symmetric(vertical: 8),
+        ),
+        onChanged: (value) {
+          context.read<NotesProvider>().setSearchQuery(value);
+        },
       ),
     );
   }
