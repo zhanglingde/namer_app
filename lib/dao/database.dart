@@ -20,7 +20,6 @@ CREATE TABLE tb_books (
 )
 ''';
 
-
 const String dbName = "namer_app.db"; // 数据库文件名
 const CREATE_LIKE_SQL = '''
 CREATE TABLE tb_word_collect (
@@ -40,7 +39,7 @@ CREATE TABLE tb_history (
 ''';
 const CREATE_NOTE_SQL = '''
 CREATE TABLE notes (
-  id TEXT PRIMARY KEY,
+  id TEXT PRIMARY KEY ,
   title TEXT NOT NULL,
   content TEXT NOT NULL,
   createdAt TEXT NOT NULL,
@@ -52,7 +51,6 @@ CREATE TABLE notes (
 ''';
 
 class DBHelper {
-
   static final DBHelper _instance = DBHelper._internal();
   static Database? _database;
 
@@ -80,22 +78,31 @@ class DBHelper {
     // 获取数据库存储路径，全平台兼容，无需path_provider
     String dbDir = await getDatabasesPath();
     String dbPath = join(dbDir, dbName);
+    print('dbPath' + dbPath);
     return await databaseFactory.openDatabase(dbPath,
-      options: OpenDatabaseOptions(
-        version: 1,
-        onCreate: (db, version) async {
-          // 数据库首次创建时，执行建表
-          await db.execute(CREATE_LIKE_SQL);
-          await db.execute(CREATE_HISTORY_SQL);
-          print("✅ 收藏单词表创建成功！");
-        },
-        onUpgrade: (db, oldVersion, newVersion) async {
-          // 后续版本更新、表结构修改在这里写（比如新增字段）
-          await db.execute(CREATE_NOTE_SQL);
-          // print("✅ 数据库升级成功，新增历史表！");
-        },
-      )
-    );
+        options: OpenDatabaseOptions(
+          version: 2,  // 更新数据库时手动修改版本
+          onCreate: (db, version) async {
+            // 数据库首次创建时，执行建表
+            await db.execute(CREATE_LIKE_SQL);
+            await db.execute(CREATE_HISTORY_SQL);
+            print("✅ 收藏单词表创建成功！");
+          },
+          onUpgrade: (db, oldVersion, newVersion) async {
+            // 后续版本更新、表结构修改在这里写（比如新增字段）
+            await db.execute(CREATE_NOTE_SQL);
+            print("✅ 数据库升级成功，新增历史表！");
+          },
+        ));
+  }
+
+  // 更新数据库
+  Future<void> onUpgradeDatabase(
+      Database db, int oldVersion, int newVersion) async {
+    switch(oldVersion) {
+      case 2:
+        await db.execute(CREATE_NOTE_SQL);
+    }
   }
 
   // 关闭数据库
@@ -107,6 +114,3 @@ class DBHelper {
     }
   }
 }
-
-
-

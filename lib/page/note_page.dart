@@ -1,10 +1,275 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:namer_app/providers/note_provider.dart';
+import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
+import '../dao/note_dao.dart';
+import '../models/note.dart';
 
-class NotePage extends StatelessWidget{
+class NotePage extends StatefulWidget {
+  @override
+  State<NotePage> createState() => _NotePageState();
+}
+
+class _NotePageState extends State<NotePage> {
+
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
-    throw UnimplementedError();
+    var theme = Theme.of(context);
+
+    // if (_isLoading) {
+    //   return Center(
+    //     child: CircularProgressIndicator(),
+    //   );
+    // }
+    //
+    // if (_notes.isEmpty) {
+    //   return Center(
+    //     child: Text('暂无笔记'),
+    //   );
+    // }
+
+    return Container(
+      width: 350,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          right: BorderSide(color: Colors.grey[300]!),
+        ),
+      ),
+      child: Column(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.add, size: 24),
+            onPressed: () {
+              context.read<NotesProvider>().createNote();
+            },
+            tooltip: '新建笔记',
+          ),
+          const Divider(height: 1),
+          Expanded(
+            child: _buildNotesList(),
+          ),
+        ],
+      ),
+    );
   }
 
+  Widget _buildNotesList(){
+    return Consumer<NotesProvider>(
+      builder: (context, provider, child) {
+        final notes = provider.notes;
+
+        if (notes.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.note_add, size: 64, color: Colors.grey[400]),
+                const SizedBox(height: 16),
+                Text(
+                  provider.searchQuery.isNotEmpty ? '未找到相关笔记' : '暂无笔记',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                if (provider.searchQuery.isEmpty)
+                  TextButton.icon(
+                    onPressed: () {
+                      provider.createNote();
+                    },
+                    icon: const Icon(Icons.add),
+                    label: const Text('创建第一篇笔记'),
+                  ),
+              ],
+            ),
+          );
+        }
+
+        return ListView.builder(
+            itemCount: notes.length,
+            itemBuilder: (context, index) {
+              final note = notes[index];
+              final isSelected = provider.selectedNote?.id == note.id;
+
+              return _buildNoteCard(context, note, isSelected);
+            });
+      },
+    );
+  }
+
+
+  Widget _buildNoteCard(BuildContext context, Note note, bool isSelected) {
+    final dateFormat = DateFormat('MM/dd HH:mm');
+
+    return Material(
+      color: isSelected ? Colors.blue[50] : Colors.white,
+      child: InkWell(
+        onTap: () {
+          context.read<NotesProvider>().selectNote(note);
+        },
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(color: Colors.grey[200]!),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 标题和时间
+              Row(
+                children: [
+                  if (note.isPinned)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: Icon(
+                        Icons.push_pin,
+                        size: 14,
+                        color: Colors.orange[700],
+                      ),
+                    ),
+                  Expanded(
+                    child: Text(
+                      note.title,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: isSelected ? Colors.blue[900] : Colors.black87,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  PopupMenuButton(
+                    icon: Icon(
+                      Icons.more_horiz,
+                      size: 20,
+                      color: Colors.grey[600],
+                    ),
+                    itemBuilder: (context) => [
+                      PopupMenuItem(
+                        child: Row(
+                          children: [
+                            Icon(
+                              note.isPinned ? Icons.push_pin_outlined : Icons.push_pin,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(note.isPinned ? '取消置顶' : '置顶'),
+                          ],
+                        ),
+                        onTap: () {
+                          context.read<NotesProvider>().togglePin(note.id);
+                        },
+                      ),
+                      PopupMenuItem(
+                        child: const Row(
+                          children: [
+                            Icon(Icons.delete, size: 18, color: Colors.red),
+                            SizedBox(width: 8),
+                            Text('删除', style: TextStyle(color: Colors.red)),
+                          ],
+                        ),
+                        onTap: () {
+                          _confirmDelete(context, note);
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+
+              // 内容预览
+              Text(
+                note.getPreview(maxLength: 80),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey[700],
+                  height: 1.4,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 8),
+
+              // 标签和时间
+              Row(
+                children: [
+                  if (note.tags.isNotEmpty) ...[
+                    Expanded(
+                      child: Wrap(
+                        spacing: 4,
+                        runSpacing: 4,
+                        children: note.tags.take(3).map((tag) {
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.blue[100],
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              '#$tag',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.blue[700],
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ],
+                  Text(
+                    dateFormat.format(note.updatedAt),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey[500],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _confirmDelete(BuildContext context, Note note) {
+    Future.delayed(Duration.zero, () {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('确认删除'),
+          content: Text('确定要删除笔记"${note.title}"吗？'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('取消'),
+            ),
+            TextButton(
+              onPressed: () {
+                context.read<NotesProvider>().deleteNote(note.id);
+                Navigator.pop(context);
+              },
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('删除'),
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} '
+        '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
 }

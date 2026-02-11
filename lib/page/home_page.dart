@@ -96,8 +96,7 @@ class _MyHomePageState extends State<MyHomePage> {
         } else {
           return Row(
             children: [
-              SafeArea(
-                // 确保其子项不会被硬件凹口或状态栏遮挡
+              SafeArea( // SafeArea 可以防止 UI 被刘海屏、状态栏等东西挡住
                 child: NavigationRail(
                   // 防止导航按钮被遮挡
                   extended: constraints.maxWidth >= 600,
