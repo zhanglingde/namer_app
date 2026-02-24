@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import '../models/note.dart';
 import '../providers/note_provider.dart';
+import 'rich_text_editor.dart';
 
 class NoteDetailPage extends StatefulWidget {
   const NoteDetailPage({Key? key}) : super(key: key);
@@ -147,10 +148,13 @@ class _NoteDetailPageState extends State<NoteDetailPage> {
                   _buildTags(note, provider),
                   const SizedBox(height: 24),
 
-                  // 内容区域 - 根据模式显示编辑器或预览
-                  _isPreviewMode
-                      ? _buildMarkdownPreview()
-                      : _buildMarkdownEditor(),
+                  // 内容区域 - 根据笔记类型和模式显示不同的编辑器
+                  if (note.noteType == NoteType.markdown)
+                    _isPreviewMode
+                        ? _buildMarkdownPreview()
+                        : _buildMarkdownEditor()
+                  else
+                    _buildRichTextEditor(),
                 ],
               ),
             ),
@@ -177,28 +181,56 @@ class _NoteDetailPageState extends State<NoteDetailPage> {
           ),
           const SizedBox(width: 8),
 
-          // 编辑/预览切换按钮
-          SegmentedButton<bool>(
-            segments: const [
-              ButtonSegment(
-                value: false,
-                label: Text('编辑'),
-                icon: Icon(Icons.edit, size: 16),
-              ),
-              ButtonSegment(
-                value: true,
-                label: Text('预览'),
-                icon: Icon(Icons.visibility, size: 16),
-              ),
-            ],
-            selected: {_isPreviewMode},
-            onSelectionChanged: (Set<bool> newSelection) {
-              setState(() {
-                _isPreviewMode = newSelection.first;
-              });
-            },
-          ),
+          // 编辑/预览切换按钮 - 仅 Markdown 笔记显示
+          if (note.noteType == NoteType.markdown)
+            SegmentedButton<bool>(
+              segments: const [
+                ButtonSegment(
+                  value: false,
+                  label: Text('编辑'),
+                  icon: Icon(Icons.edit, size: 16),
+                ),
+                ButtonSegment(
+                  value: true,
+                  label: Text('预览'),
+                  icon: Icon(Icons.visibility, size: 16),
+                ),
+              ],
+              selected: {_isPreviewMode},
+              onSelectionChanged: (Set<bool> newSelection) {
+                setState(() {
+                  _isPreviewMode = newSelection.first;
+                });
+              },
+            ),
           const Spacer(),
+
+          // 笔记类型标签
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: note.noteType == NoteType.markdown ? Colors.blue[50] : Colors.orange[50],
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  note.noteType == NoteType.markdown ? Icons.text_fields : Icons.format_paint,
+                  size: 14,
+                  color: note.noteType == NoteType.markdown ? Colors.blue[700] : Colors.orange[700],
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  note.noteType == NoteType.markdown ? 'Markdown' : '富文本',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: note.noteType == NoteType.markdown ? Colors.blue[700] : Colors.orange[700],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
 
           // 置顶按钮
           IconButton(
@@ -479,6 +511,20 @@ class _NoteDetailPageState extends State<NoteDetailPage> {
           color: Colors.grey[100],
           borderRadius: BorderRadius.circular(4),
         ),
+      ),
+    );
+  }
+
+  // 富文本编辑器
+  Widget _buildRichTextEditor() {
+    return SizedBox(
+      height: 600,
+      child: RichTextEditor(
+        initialContent: _contentController.text,
+        onContentChanged: (content) {
+          _contentController.text = content;
+          _onTextChanged();
+        },
       ),
     );
   }

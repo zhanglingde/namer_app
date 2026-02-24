@@ -46,7 +46,8 @@ CREATE TABLE notes (
   updatedAt TEXT NOT NULL,
   tags TEXT,
   isPinned INTEGER NOT NULL DEFAULT 0,
-  isArchived INTEGER NOT NULL DEFAULT 0
+  isArchived INTEGER NOT NULL DEFAULT 0,
+  noteType INTEGER NOT NULL DEFAULT 0
 )
 ''';
 
@@ -81,17 +82,24 @@ class DBHelper {
     print('dbPath' + dbPath);
     return await databaseFactory.openDatabase(dbPath,
         options: OpenDatabaseOptions(
-          version: 2,  // 更新数据库时手动修改版本
+          version: 3,  // 更新数据库时手动修改版本
           onCreate: (db, version) async {
             // 数据库首次创建时，执行建表
             await db.execute(CREATE_LIKE_SQL);
             await db.execute(CREATE_HISTORY_SQL);
+            await db.execute(CREATE_NOTE_SQL);
             print("✅ 收藏单词表创建成功！");
           },
           onUpgrade: (db, oldVersion, newVersion) async {
             // 后续版本更新、表结构修改在这里写（比如新增字段）
-            await db.execute(CREATE_NOTE_SQL);
-            print("✅ 数据库升级成功，新增历史表！");
+            if (oldVersion < 2) {
+              await db.execute(CREATE_NOTE_SQL);
+              print("✅ 数据库升级成功，新增笔记表！");
+            }
+            if (oldVersion < 3) {
+              await db.execute('ALTER TABLE notes ADD COLUMN noteType INTEGER NOT NULL DEFAULT 0');
+              print("✅ 数据库升级成功，新增笔记类型字段！");
+            }
           },
         ));
   }

@@ -1,5 +1,4 @@
 import '../models/note.dart';
-import '../models/word.dart';
 import 'database.dart';
 
 

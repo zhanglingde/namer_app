@@ -1,14 +1,20 @@
 import 'dart:convert';
 
+enum NoteType {
+  markdown,
+  richText,
+}
+
 class Note {
   final String id;
   final String title;
-  final String content; // Quill Delta JSON
+  final String content; // Markdown text or Quill Delta JSON
   final DateTime createdAt;
   final DateTime updatedAt;
   final List<String> tags;
   final bool isPinned;
   final bool isArchived;
+  final NoteType noteType; // 笔记类型
 
   Note({
     required this.id,
@@ -19,6 +25,7 @@ class Note {
     this.tags = const [],
     this.isPinned = false,
     this.isArchived = false,
+    this.noteType = NoteType.markdown, // 默认为 Markdown
   });
 
   // 从数据库加载
@@ -32,6 +39,7 @@ class Note {
       tags: (map['tags'] as String).split(',').where((t) => t.isNotEmpty).toList(),
       isPinned: map['isPinned'] == 1,
       isArchived: map['isArchived'] == 1,
+      noteType: NoteType.values[map['noteType'] as int? ?? 0], // as int? 预期可能为整数，但也可能为 null; ?? 0 为 null 时给默认值 0
     );
   }
 
@@ -46,6 +54,7 @@ class Note {
       'tags': tags.join(','),
       'isPinned': isPinned ? 1 : 0,
       'isArchived': isArchived ? 1 : 0,
+      'noteType': noteType.index,
     };
   }
 
@@ -59,6 +68,7 @@ class Note {
     List<String>? tags,
     bool? isPinned,
     bool? isArchived,
+    NoteType? noteType,
   }) {
     return Note(
       id: id ?? this.id,
@@ -69,17 +79,29 @@ class Note {
       tags: tags ?? this.tags,
       isPinned: isPinned ?? this.isPinned,
       isArchived: isArchived ?? this.isArchived,
+      noteType: noteType ?? this.noteType,
     );
   }
 
   // 获取纯文本内容（用于搜索和预览）
   String getPlainText() {
     try {
-      // final doc = Document.fromJson(jsonDecode(content));
-      // return doc.toPlainText();
-      return '';
+      if (noteType == NoteType.markdown) {
+        // Markdown 笔记直接返回内容
+        return content;
+      } else {
+        // 富文本笔记需要从 Quill Delta JSON 中提取文本
+        final List<dynamic> delta = jsonDecode(content);
+        final StringBuffer buffer = StringBuffer();
+        for (var op in delta) {
+          if (op is Map && op.containsKey('insert')) {
+            buffer.write(op['insert'].toString());
+          }
+        }
+        return buffer.toString();
+      }
     } catch (e) {
-      return '';
+      return content;
     }
   }
 

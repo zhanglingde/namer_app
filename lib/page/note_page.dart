@@ -4,6 +4,11 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../models/note.dart';
 
+enum CreateNoteType {
+  markdown,
+  richText,
+}
+
 class NotePage extends StatefulWidget {
   @override
   State<NotePage> createState() => _NotePageState();
@@ -31,9 +36,7 @@ class _NotePageState extends State<NotePage> {
               ),
               IconButton(
                 icon: const Icon(Icons.add, size: 24),
-                onPressed: () {
-                  context.read<NotesProvider>().createNote();
-                },
+                onPressed: () => _showCreateNoteDialog(context),
                 tooltip: '新建笔记',
               ),
             ],
@@ -102,9 +105,7 @@ class _NotePageState extends State<NotePage> {
                 const SizedBox(height: 8),
                 if (provider.searchQuery.isEmpty)
                   TextButton.icon(
-                    onPressed: () {
-                      provider.createNote();
-                    },
+                    onPressed: () => _showCreateNoteDialog(context),
                     icon: const Icon(Icons.add),
                     label: const Text('创建第一篇笔记'),
                   ),
@@ -292,5 +293,44 @@ class _NotePageState extends State<NotePage> {
         ),
       );
     });
+  }
+
+  void _showCreateNoteDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('选择笔记类型'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.text_fields, color: Colors.blue),
+              title: const Text('Markdown 笔记'),
+              subtitle: const Text('支持 Markdown 语法的文本编辑'),
+              onTap: () {
+                Navigator.pop(context);
+                context.read<NotesProvider>().createNote(noteType: NoteType.markdown);
+              },
+            ),
+            const SizedBox(height: 8),
+            ListTile(
+              leading: const Icon(Icons.format_paint, color: Colors.orange),
+              title: const Text('富文本笔记'),
+              subtitle: const Text('所见即所得的富文本编辑器'),
+              onTap: () {
+                Navigator.pop(context);
+                context.read<NotesProvider>().createNote(noteType: NoteType.richText);
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('取消'),
+          ),
+        ],
+      ),
+    );
   }
 }

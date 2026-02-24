@@ -46,13 +46,14 @@ class NotesProvider extends ChangeNotifier {
   }
 
   // 创建新笔记
-  Future<Note> createNote({String title = '无标题'}) async {
+  Future<Note> createNote({String title = '无标题', NoteType noteType = NoteType.markdown}) async {
     final note = Note(
       id: const Uuid().v4(),
       title: title,
-      content: '',
+      content: noteType == NoteType.richText ? '[{"insert":"\\n"}]' : '',
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
+      noteType: noteType,
     );
 
     await _noteDao.createNote(note);

@@ -57,9 +57,11 @@ dependencies:
   # UUID 生成
   uuid: ^4.2.1
   # 日期格式化
-  intl: ^0.19.0
+  intl: ^0.20.2
   # Markdown 渲染
   flutter_markdown: ^0.7.4+1
+  # 富文本编辑器
+  flutter_quill: ^11.5.0
 
 
 dev_dependencies:

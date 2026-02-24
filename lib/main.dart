@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_quill/flutter_quill.dart';
 import 'package:namer_app/page/home_page.dart';
 import 'package:namer_app/providers/note_provider.dart';
 import 'package:provider/provider.dart';
@@ -48,6 +50,16 @@ class MyApp extends StatelessWidget {
                 primarySwatch: Colors.blue,
                 brightness: Brightness.dark,
               ),
+              localizationsDelegates: const [
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+                FlutterQuillLocalizations.delegate,
+              ],
+              supportedLocales: const [
+                Locale('zh', 'CN'),
+                Locale('en', 'US'),
+              ],
               home: MyHomePage(),
             );
           }
