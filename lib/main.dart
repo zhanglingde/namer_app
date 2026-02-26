@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:namer_app/page/home_page.dart';
 import 'package:namer_app/providers/note_provider.dart';
+import 'package:namer_app/providers/todo_provider.dart';
 import 'package:provider/provider.dart';
 
 import 'config/my_app_state.dart';
@@ -34,6 +35,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => MyAppState(),),
         // 创建后立即触发加载数据库
         ChangeNotifierProvider(create: (context) => NotesProvider()..loadNotes(),),
+        ChangeNotifierProvider(create: (context) => TodoProvider()..loadTodos(),),
       ],
       child: Consumer<Prefs>(  // Consumer 从上面的 MultiProvider 注册的状态列表中，获取 Prefs 并监听
           builder: (context, prefsNotifier, child) {

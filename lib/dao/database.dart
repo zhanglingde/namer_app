@@ -51,6 +51,28 @@ CREATE TABLE notes (
 )
 ''';
 
+const CREATE_TODO_SQL = '''
+CREATE TABLE todos (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  description TEXT,
+  isCompleted INTEGER NOT NULL DEFAULT 0,
+  createdAt TEXT NOT NULL,
+  dueDate TEXT,
+  priority INTEGER NOT NULL DEFAULT 1,
+  tags TEXT,
+  groupId TEXT
+)
+''';
+
+const CREATE_TODO_GROUP_SQL = '''
+CREATE TABLE todo_groups (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  color INTEGER NOT NULL
+)
+''';
+
 class DBHelper {
   static final DBHelper _instance = DBHelper._internal();
   static Database? _database;
@@ -82,13 +104,15 @@ class DBHelper {
     print('dbPath' + dbPath);
     return await databaseFactory.openDatabase(dbPath,
         options: OpenDatabaseOptions(
-          version: 3,  // 更新数据库时手动修改版本
+          version: 4,  // 更新数据库时手动修改版本
           onCreate: (db, version) async {
             // 数据库首次创建时，执行建表
             await db.execute(CREATE_LIKE_SQL);
             await db.execute(CREATE_HISTORY_SQL);
             await db.execute(CREATE_NOTE_SQL);
-            print("✅ 收藏单词表创建成功！");
+            await db.execute(CREATE_TODO_SQL);
+            await db.execute(CREATE_TODO_GROUP_SQL);
+            print("✅ 数据库创建成功！");
           },
           onUpgrade: (db, oldVersion, newVersion) async {
             // 后续版本更新、表结构修改在这里写（比如新增字段）
@@ -99,6 +123,11 @@ class DBHelper {
             if (oldVersion < 3) {
               await db.execute('ALTER TABLE notes ADD COLUMN noteType INTEGER NOT NULL DEFAULT 0');
               print("✅ 数据库升级成功，新增笔记类型字段！");
+            }
+            if (oldVersion < 4) {
+              await db.execute(CREATE_TODO_SQL);
+              await db.execute(CREATE_TODO_GROUP_SQL);
+              print("✅ 数据库升级成功，新增待办表！");
             }
           },
         ));

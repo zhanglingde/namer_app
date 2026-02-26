@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:namer_app/page/notes_layout_page.dart';
 import 'package:namer_app/page/search_page.dart';
 import 'package:namer_app/page/settings_page.dart';
+import 'package:namer_app/page/todo_layout_page.dart';
 import 'package:provider/provider.dart';
 
 import '../config/my_app_state.dart';
@@ -52,6 +53,9 @@ class _MyHomePageState extends State<MyHomePage> {
       case 5:
         page = NotesLayoutPage();   // 笔记
         break;  //
+      case 6:
+        page = TodoLayoutPage();   // 待办
+        break;
       default:
         throw UnimplementedError('no widget for $selectedIndex');
     }
@@ -107,6 +111,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     NavigationRailDestination(icon: Icon(Icons.download), label: Text('下载'),),
                     NavigationRailDestination(icon: Icon(Icons.settings), label: Text('设置'),),
                     NavigationRailDestination(icon: Icon(Icons.book), label: Text('笔记'),),
+                    NavigationRailDestination(icon: Icon(Icons.note_alt_outlined), label: Text('待办'),),
                   ],
                   selectedIndex: selectedIndex,
                   onDestinationSelected: (value) {
