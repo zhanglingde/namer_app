@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/todo.dart';
 import '../providers/todo_provider.dart';
+import 'rich_text_editor.dart';
 
 class TodoDetailPage extends StatefulWidget {
   const TodoDetailPage({Key? key}) : super(key: key);
@@ -12,9 +13,9 @@ class TodoDetailPage extends StatefulWidget {
 
 class _TodoDetailPageState extends State<TodoDetailPage> {
   final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _descriptionController = TextEditingController();
 
   Todo? _currentTodo;
+  String _descriptionContent = '';
   DateTime? _selectedDate;
   TodoPriority _selectedPriority = TodoPriority.medium;
   String? _selectedGroupId;
@@ -22,7 +23,6 @@ class _TodoDetailPageState extends State<TodoDetailPage> {
   @override
   void dispose() {
     _titleController.dispose();
-    _descriptionController.dispose();
     super.dispose();
   }
 
@@ -30,7 +30,7 @@ class _TodoDetailPageState extends State<TodoDetailPage> {
     if (_currentTodo?.id != todo.id) {
       _currentTodo = todo;
       _titleController.text = todo.title;
-      _descriptionController.text = todo.description ?? '';
+      _descriptionContent = todo.description ?? '';
       _selectedDate = todo.dueDate;
       _selectedPriority = todo.priority;
       _selectedGroupId = todo.groupId;
@@ -43,7 +43,7 @@ class _TodoDetailPageState extends State<TodoDetailPage> {
     final provider = context.read<TodoProvider>();
     final updatedTodo = _currentTodo!.copyWith(
       title: _titleController.text.trim().isEmpty ? '无标题' : _titleController.text.trim(),
-      description: _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
+      description: _descriptionContent.isEmpty ? null : _descriptionContent,
       dueDate: _selectedDate,
       priority: _selectedPriority,
       groupId: _selectedGroupId,
@@ -173,12 +173,14 @@ class _TodoDetailPageState extends State<TodoDetailPage> {
           ),
         ),
         const SizedBox(height: 8),
-        TextField(
-          controller: _descriptionController,
-          maxLines: 5,
-          decoration: const InputDecoration(
-            hintText: '输入待办描述（可选）',
-            border: OutlineInputBorder(),
+        SizedBox(
+          height: 300,
+          child: RichTextEditor(
+            key: ValueKey(_currentTodo?.id),
+            initialContent: _descriptionContent,
+            onContentChanged: (content) {
+              _descriptionContent = content;
+            },
           ),
         ),
       ],

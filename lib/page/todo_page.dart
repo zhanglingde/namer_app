@@ -193,6 +193,7 @@ class _TodoPageState extends State<TodoPage> {
             color: todo.isCompleted ? Colors.grey[500] : Colors.black87,
           ),
         ),
+        // 到期时间
         subtitle: todo.dueDate != null
             ? Text(
                 _formatDate(todo.dueDate!),
@@ -254,7 +255,7 @@ class _TodoPageState extends State<TodoPage> {
     } else if (todoDate == today.add(const Duration(days: 1))) {
       return '明天';
     } else {
-      return '${date.month}/${date.day}';
+      return '${date.year}-${date.month}-${date.day}';
     }
   }
 

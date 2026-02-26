@@ -4,8 +4,17 @@ import '../providers/todo_provider.dart';
 import 'todo_page.dart';
 import 'todo_detail_page.dart';
 
-class TodoLayoutPage extends StatelessWidget {
+class TodoLayoutPage extends StatefulWidget {
   const TodoLayoutPage({Key? key}) : super(key: key);
+
+  @override
+  State<TodoLayoutPage> createState() => _TodoLayoutPageState();
+}
+
+class _TodoLayoutPageState extends State<TodoLayoutPage> {
+  double _detailWidth = 400;
+  static const double _minDetailWidth = 200;
+  static const double _maxDetailWidth = 700;
 
   @override
   Widget build(BuildContext context) {
@@ -18,16 +27,42 @@ class TodoLayoutPage extends StatelessWidget {
           Expanded(
             child: TodoPage(),
           ),
-          // 右侧详情区域（可滑动）
+          // 右侧详情区域（可拖动宽度）
           Consumer<TodoProvider>(
             builder: (context, provider, child) {
               if (provider.selectedTodo == null) {
                 return const SizedBox.shrink();
               }
-              return AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                width: 400,
-                child: TodoDetailPage(),
+              return Row(
+                children: [
+                  // 拖动分隔条
+                  GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onHorizontalDragUpdate: (details) {
+                      setState(() {
+                        _detailWidth = (_detailWidth - details.delta.dx)
+                            .clamp(_minDetailWidth, _maxDetailWidth);
+                      });
+                    },
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.resizeLeftRight,
+                      child: Container(
+                        width: 6,
+                        color: Colors.transparent,
+                        child: Center(
+                          child: Container(
+                            width: 1,
+                            color: Colors.grey[300],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: _detailWidth,
+                    child: TodoDetailPage(),
+                  ),
+                ],
               );
             },
           ),
