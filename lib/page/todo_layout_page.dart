@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/todo_provider.dart';
 import 'todo_page.dart';
+import 'todo_detail_page.dart';
 
 class TodoLayoutPage extends StatelessWidget {
   const TodoLayoutPage({Key? key}) : super(key: key);
@@ -13,9 +14,22 @@ class TodoLayoutPage extends StatelessWidget {
         children: [
           // 左侧导航栏
           _buildSidebar(context),
-          // 右侧主内容区
+          // 中间主内容区
           Expanded(
             child: TodoPage(),
+          ),
+          // 右侧详情区域（可滑动）
+          Consumer<TodoProvider>(
+            builder: (context, provider, child) {
+              if (provider.selectedTodo == null) {
+                return const SizedBox.shrink();
+              }
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                width: 400,
+                child: TodoDetailPage(),
+              );
+            },
           ),
         ],
       ),

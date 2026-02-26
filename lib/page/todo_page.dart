@@ -175,43 +175,48 @@ class _TodoPageState extends State<TodoPage> {
   }
 
   Widget _buildTodoItem(Todo todo) {
-    return ListTile(
-      leading: Checkbox(
-        value: todo.isCompleted,
-        onChanged: (value) {
-          context.read<TodoProvider>().toggleComplete(todo.id);
+    return GestureDetector(
+      onSecondaryTapDown: (details) {
+        _showContextMenu(context, details.globalPosition, todo);
+      },
+      child: ListTile(
+        leading: Checkbox(
+          value: todo.isCompleted,
+          onChanged: (value) {
+            context.read<TodoProvider>().toggleComplete(todo.id);
+          },
+        ),
+        title: Text(
+          todo.title,
+          style: TextStyle(
+            decoration: todo.isCompleted ? TextDecoration.lineThrough : null,
+            color: todo.isCompleted ? Colors.grey[500] : Colors.black87,
+          ),
+        ),
+        subtitle: todo.dueDate != null
+            ? Text(
+                _formatDate(todo.dueDate!),
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              )
+            : null,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 优先级指示器
+            _buildPriorityIndicator(todo.priority),
+            const SizedBox(width: 8),
+            // 删除按钮
+            IconButton(
+              icon: const Icon(Icons.delete_outline, size: 20),
+              onPressed: () => _confirmDelete(todo),
+              color: Colors.grey[600],
+            ),
+          ],
+        ),
+        onTap: () {
+          context.read<TodoProvider>().selectTodo(todo);
         },
       ),
-      title: Text(
-        todo.title,
-        style: TextStyle(
-          decoration: todo.isCompleted ? TextDecoration.lineThrough : null,
-          color: todo.isCompleted ? Colors.grey[500] : Colors.black87,
-        ),
-      ),
-      subtitle: todo.dueDate != null
-          ? Text(
-              _formatDate(todo.dueDate!),
-              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-            )
-          : null,
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // 优先级指示器
-          _buildPriorityIndicator(todo.priority),
-          const SizedBox(width: 8),
-          // 删除按钮
-          IconButton(
-            icon: const Icon(Icons.delete_outline, size: 20),
-            onPressed: () => _confirmDelete(todo),
-            color: Colors.grey[600],
-          ),
-        ],
-      ),
-      onTap: () {
-        context.read<TodoProvider>().selectTodo(todo);
-      },
     );
   }
 
@@ -274,6 +279,69 @@ class _TodoPageState extends State<TodoPage> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showContextMenu(BuildContext context, Offset position, Todo todo) {
+    final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+
+    showMenu<String>(
+      context: context,
+      position: RelativeRect.fromRect(
+        position & const Size(40, 40),
+        Offset.zero & overlay.size,
+      ),
+      items: <PopupMenuEntry<String>>[
+        PopupMenuItem<String>(
+          value: 'edit',
+          child: const Row(
+            children: [
+              Icon(Icons.edit, size: 18),
+              SizedBox(width: 8),
+              Text('编辑'),
+            ],
+          ),
+          onTap: () {
+            Future.delayed(Duration.zero, () {
+              context.read<TodoProvider>().selectTodo(todo);
+            });
+          },
+        ),
+        PopupMenuItem<String>(
+          value: 'toggle',
+          child: Row(
+            children: [
+              Icon(
+                todo.isCompleted ? Icons.check_box_outline_blank : Icons.check_box,
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Text(todo.isCompleted ? '标记为未完成' : '标记为已完成'),
+            ],
+          ),
+          onTap: () {
+            Future.delayed(Duration.zero, () {
+              context.read<TodoProvider>().toggleComplete(todo.id);
+            });
+          },
+        ),
+        const PopupMenuDivider(),
+        PopupMenuItem<String>(
+          value: 'delete',
+          child: const Row(
+            children: [
+              Icon(Icons.delete, size: 18, color: Colors.red),
+              SizedBox(width: 8),
+              Text('删除', style: TextStyle(color: Colors.red)),
+            ],
+          ),
+          onTap: () {
+            Future.delayed(Duration.zero, () {
+              _confirmDelete(todo);
+            });
+          },
+        ),
+      ],
     );
   }
 }
